@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+	<title>Chuyển đổi ngôn ngữ</title>
+	<style type="text/css">
+		.form {
+			margin: 20px;
+			padding: 20px;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			box-shadow: 0px 0px 10px #ccc;
+		}
+		label {
+			display: block;
+			margin-bottom: 10px;
+		}
+		input[type="text"], textarea {
+			padding: 5px;
+			border-radius: 5px;
+			border: 1px solid #ccc;
+			width: 100%;
+			box-sizing: border-box;
+			font-size: 16px;
+			margin-bottom: 10px;
+		}
+		input[type="button"] {
+			background-color: #4CAF50;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 16px;
+		}
+		input[type="button"]:hover {
+			background-color: #45a049;
+		}
+		#code {
+			margin-top: 20px;
+			padding: 10px;
+			background-color: #f0f0f0;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			font-size: 16px;
+		}
+	</style>
+</head>
+<body>
+	<div class="form">
+		<label for="from_lang">Ngôn ngữ hiện tại:</label>
+		<input type="text" id="from_lang" placeholder="Để không nếu muốn tự detect">
+
+		<label for="to_lang">Ngôn ngữ muốn chuyển đổi:</label>
+		<input type="text" id="to_lang">
+
+		<label for="source_code">Mã nguồn:</label>
+		<textarea id="source_code" rows="10"></textarea>
+
+		<input type="button" id="convert" value="Chuyển đổi">
+
+		<pre id="code"></pre>
+		<div id="ext"></div>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+
+	<script>
+	
+	    const from_lang = document.getElementById("from_lang");
+	    const to_lang = document.getElementById("to_lang");
+	    
+	    const source_code = document.getElementById("source_code")
+	    const convert = document.getElementById("convert");
+	    const output = document.getElementById("code");
+	    output.textContent = 'Không có gì để xử lý';
+	    convert.addEventListener('click', function(event) {
+          if (to_lang.value != "" && source_code.value != "" && convert.value != "") {
+              
+              var question = '';
+              if(from_lang == '') { question = `Convert this code to language ${to_lang.value}: ${source_code.value}`; }
+              else {
+                   question = `Convert this code from ${from_lang.value} to ${to_lang.value}: ${source_code.value}`;
+              }
+            
+              const data = new FormData();
+              data.append('ask', question);
+              data.append('title', '');
+              data.append('content', '');
+            
+              console.log(data);
+              
+              const xhr = new XMLHttpRequest();
+              output.textContent = 'Đang xử lý...';
+              xhr.open('POST', 'action.php');
+              // Không cần thiết phải set Header 'Content-Type' là 'application/json'
+              
+              xhr.onload = function() {
+              
+                var data = xhr.responseText;
+                if (data) {
+                    data = data.split("\n");
+                    var i = 1;
+                    output.textContent = '';
+                    data.map((value, index) => {
+                        if (value != '') {
+                            var res = null;
+                            eval(`res = ${value}`)
+                            setTimeout(()=>{
+                                output.textContent += res.completion;
+                            },50*i);
+                            i++;
+                        }
+                    })
+                }
+              };
+              
+              xhr.onerror = function() {
+                // Xử lý lỗi ở đây
+              };
+              
+              xhr.send(data);
+            
+            } else {
+                alert("Không được để rỗng");
+            }
+
+        });
+	</script>
+		<script>
+	    
+
+        const copyBtn = document.createElement('button');
+        copyBtn.innerText = 'Copy kết quả';
+        document.getElementById("ext").appendChild(copyBtn);
+        
+        const clipboard = new ClipboardJS(copyBtn, {
+          text: function() {
+            return document.getElementById("code").textContent;
+          }
+        });
+        
+        clipboard.on('success', function() {
+          alert('Đã sao chép kết quả!');
+        });
+        
+        clipboard.on('error', function() {
+          alert('Không thể sao chép kết quả!');
+        });
+
+	</script>
+
+</body>
+</html>
